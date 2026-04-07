@@ -2,9 +2,9 @@
 
 **Project:** PromoterCard - NFC-Powered Event Promotion Platform  
 **Tech Stack:** Node.js + TypeScript + MongoDB + Mongoose + Redis + BullMQ  
-**Version:** 1.0  
+**Version:** 1.0 (Single-Tenant, Production-Grade)  
 **Created:** April 7, 2026  
-**Based On:** Master System Prompt v2 (Task Management Backend patterns)  
+**Based On:** PRD v3 + Master System Prompt + Module Creation Guide  
 
 ---
 
@@ -46,19 +46,20 @@
 - ✅ SOLID principles enforced
 - ✅ Horizontal scaling from day one
 
-### 1.2 Patterns from Master System Prompt
+### 1.2 Patterns from Documentation
 
-**Reused Patterns:**
+**Reused Patterns (from MODULE_CREATION_GUIDE, REDIS_CACHING_GUIDE, SENIOR_PATTERNS_GUIDE):**
 - Generic controller pattern (getAllWithPaginationV2, getAllWithAggregation)
 - Generic service pattern
 - Modular architecture (`src/modules/<module-name>.module/`)
+- File structure: `.constant.ts`, `.interface.ts`, `.model.ts`, `.validation.ts`, `.service.ts`, `.controller.ts`, `.route.ts`, `.test.ts`
 - BullMQ for all heavy operations (> 500ms)
-- Redis cache-aside pattern
+- Redis cache-aside pattern with TTL by data type
 - Zod validation (100% coverage)
-- Sliding window rate limiting
-- Structured JSON logging (Winston/Pino)
+- Rate limiting tiers (auth, strict, user, api)
+- Structured JSON logging (Winston)
 - Health check endpoint
-- Comprehensive documentation per module
+- Comprehensive documentation per module (`/doc` folder with diagrams)
 
 ---
 
@@ -100,7 +101,7 @@ Peak Signups           : 5,000/minute (event spikes)
 Runtime: Node.js v20.x (LTS)
 Language: TypeScript v5.x (strict mode)
 Framework: Express.js v4.x
-Database: MongoDB v7.x (Atlas recommended)
+Database: MongoDB v7.x
 ODM: Mongoose v8.x
 Cache: Redis v7.x
 Queue: BullMQ v5.x
@@ -134,7 +135,7 @@ Validation:
 
 Rate Limiting:
   - rateLimiter middleware (sliding window, Redis-backed)
-  - Different tiers: public, auth, user, admin
+  - Tiers: auth (5/15min), strict (10/1hr), user (30/1min), api (100/1min)
 
 Observability:
   - requestLogger middleware (correlationId, responseTime)
@@ -189,77 +190,216 @@ Observability:
 prompter-card-backend/
 ├── src/
 │   ├── config/
-│   │   ├── database.ts              # MongoDB connection
-│   │   ├── redis.ts                 # Redis connection
-│   │   ├── bullmq.ts                # Queue configuration
-│   │   ├── environment.ts           # Environment variables
-│   │   └── constants.ts             # Global constants
+│   │   ├── database.ts
+│   │   ├── redis.ts
+│   │   ├── bullmq.ts
+│   │   ├── environment.ts
+│   │   └── constants.ts
 │   │
 │   ├── modules/
 │   │   ├── auth.module/
-│   │   │   ├── auth.route.ts
-│   │   │   ├── auth.controller.ts
-│   │   │   ├── auth.service.ts
-│   │   │   ├── auth.model.ts
-│   │   │   ├── auth.validation.ts
-│   │   │   ├── auth.interface.ts
-│   │   │   ├── auth.middleware.ts
+│   │   │   ├── auth/
+│   │   │   │   ├── auth.constant.ts
+│   │   │   │   ├── auth.interface.ts
+│   │   │   │   ├── auth.model.ts
+│   │   │   │   ├── auth.validation.ts
+│   │   │   │   ├── auth.service.ts
+│   │   │   │   ├── auth.controller.ts
+│   │   │   │   ├── auth.route.ts
+│   │   │   │   ├── auth.middleware.ts
+│   │   │   │   └── auth.test.ts
 │   │   │   └── doc/
 │   │   │       ├── README.md
 │   │   │       ├── dia/
+│   │   │       │   ├── auth-schema.mermaid
+│   │   │       │   ├── auth-system-flow.mermaid
+│   │   │       │   ├── auth-swimlane.mermaid
+│   │   │       │   ├── auth-user-flow.mermaid
 │   │   │       │   ├── auth-system-architecture.mermaid
+│   │   │       │   ├── auth-state-machine.mermaid
 │   │   │       │   ├── auth-sequence.mermaid
-│   │   │       │   └── auth-state-machine.mermaid
+│   │   │       │   └── auth-component-architecture.mermaid
 │   │   │       └── perf/
 │   │   │           └── auth-performance-report.md
 │   │   │
-│   │   ├── business.module/
-│   │   │   ├── business.route.ts
-│   │   │   ├── business.controller.ts
-│   │   │   ├── business.service.ts
-│   │   │   ├── business.model.ts
-│   │   │   ├── business.validation.ts
-│   │   │   ├── business.interface.ts
+│   │   ├── user.module/
+│   │   │   ├── user/
+│   │   │   │   ├── user.constant.ts
+│   │   │   │   ├── user.interface.ts
+│   │   │   │   ├── user.model.ts
+│   │   │   │   ├── user.validation.ts
+│   │   │   │   ├── user.service.ts
+│   │   │   │   ├── user.controller.ts
+│   │   │   │   ├── user.route.ts
+│   │   │   │   └── user.test.ts
 │   │   │   └── doc/
 │   │   │       └── ...
 │   │   │
 │   │   ├── landingPage.module/
-│   │   │   ├── landingPage.route.ts
-│   │   │   ├── landingPage.controller.ts
-│   │   │   ├── landingPage.service.ts
-│   │   │   ├── landingPage.model.ts
-│   │   │   ├── landingPage.validation.ts
-│   │   │   ├── landingPage.interface.ts
-│   │   │   ├── sub-modules/
-│   │   │   │   └── publicLandingPage.module/
-│   │   │   │       ├── publicLandingPage.route.ts
-│   │   │   │       ├── publicLandingPage.controller.ts
-│   │   │   │       ├── publicLandingPage.service.ts
-│   │   │   │       └── doc/
-│   │   │   │           └── ...
+│   │   │   ├── landingPage/
+│   │   │   │   ├── landingPage.constant.ts
+│   │   │   │   ├── landingPage.interface.ts
+│   │   │   │   ├── landingPage.model.ts
+│   │   │   │   ├── landingPage.validation.ts
+│   │   │   │   ├── landingPage.service.ts
+│   │   │   │   ├── landingPage.controller.ts
+│   │   │   │   ├── landingPage.route.ts
+│   │   │   │   └── landingPage.test.ts
+│   │   │   ├── publicLandingPage/
+│   │   │   │   ├── publicLandingPage.constant.ts
+│   │   │   │   ├── publicLandingPage.interface.ts
+│   │   │   │   ├── publicLandingPage.service.ts
+│   │   │   │   ├── publicLandingPage.controller.ts
+│   │   │   │   └── publicLandingPage.route.ts
 │   │   │   └── doc/
 │   │   │       └── ...
 │   │   │
 │   │   ├── promoter.module/
+│   │   │   ├── promoter/
+│   │   │   │   ├── promoter.constant.ts
+│   │   │   │   ├── promoter.interface.ts
+│   │   │   │   ├── promoter.model.ts
+│   │   │   │   ├── promoter.validation.ts
+│   │   │   │   ├── promoter.service.ts
+│   │   │   │   ├── promoter.controller.ts
+│   │   │   │   ├── promoter.route.ts
+│   │   │   │   └── promoter.test.ts
+│   │   │   └── doc/
+│   │   │       └── ...
+│   │   │
 │   │   ├── campaign.module/
-│   │   │   └── sub-modules/
-│   │   │       └── event.module/
+│   │   │   ├── campaign/
+│   │   │   │   ├── campaign.constant.ts
+│   │   │   │   ├── campaign.interface.ts
+│   │   │   │   ├── campaign.model.ts
+│   │   │   │   ├── campaign.validation.ts
+│   │   │   │   ├── campaign.service.ts
+│   │   │   │   ├── campaign.controller.ts
+│   │   │   │   ├── campaign.route.ts
+│   │   │   │   └── campaign.test.ts
+│   │   │   ├── event/
+│   │   │   │   ├── event.constant.ts
+│   │   │   │   ├── event.interface.ts
+│   │   │   │   ├── event.model.ts
+│   │   │   │   ├── event.validation.ts
+│   │   │   │   ├── event.service.ts
+│   │   │   │   ├── event.controller.ts
+│   │   │   │   ├── event.route.ts
+│   │   │   │   └── event.test.ts
+│   │   │   └── doc/
+│   │   │       └── ...
+│   │   │
 │   │   ├── participant.module/
+│   │   │   ├── participant/
+│   │   │   │   ├── participant.constant.ts
+│   │   │   │   ├── participant.interface.ts
+│   │   │   │   ├── participant.model.ts
+│   │   │   │   ├── participant.validation.ts
+│   │   │   │   ├── participant.service.ts
+│   │   │   │   ├── participant.controller.ts
+│   │   │   │   ├── participant.route.ts
+│   │   │   │   └── participant.test.ts
+│   │   │   └── doc/
+│   │   │       └── ...
+│   │   │
 │   │   ├── card.module/
-│   │   │   └── sub-modules/
-│   │   │       └── cardInteraction.module/
+│   │   │   ├── card/
+│   │   │   │   ├── card.constant.ts
+│   │   │   │   ├── card.interface.ts
+│   │   │   │   ├── card.model.ts
+│   │   │   │   ├── card.validation.ts
+│   │   │   │   ├── card.service.ts
+│   │   │   │   ├── card.controller.ts
+│   │   │   │   ├── card.route.ts
+│   │   │   │   └── card.test.ts
+│   │   │   ├── cardInteraction/
+│   │   │   │   ├── cardInteraction.constant.ts
+│   │   │   │   ├── cardInteraction.interface.ts
+│   │   │   │   ├── cardInteraction.model.ts
+│   │   │   │   ├── cardInteraction.service.ts
+│   │   │   │   ├── cardInteraction.controller.ts
+│   │   │   │   └── cardInteraction.route.ts
+│   │   │   └── doc/
+│   │   │       └── ...
+│   │   │
 │   │   ├── game.module/
-│   │   │   ├── game.service.ts
-│   │   │   └── sub-modules/
-│   │   │       ├── gamePlay.module/
-│   │   │       └── prize.module/
+│   │   │   ├── gamePlay/
+│   │   │   │   ├── gamePlay.constant.ts
+│   │   │   │   ├── gamePlay.interface.ts
+│   │   │   │   ├── gamePlay.model.ts
+│   │   │   │   ├── gamePlay.validation.ts
+│   │   │   │   ├── gamePlay.service.ts
+│   │   │   │   ├── gamePlay.controller.ts
+│   │   │   │   ├── gamePlay.route.ts
+│   │   │   │   └── gamePlay.test.ts
+│   │   │   ├── prize/
+│   │   │   │   ├── prize.constant.ts
+│   │   │   │   ├── prize.interface.ts
+│   │   │   │   ├── prize.model.ts
+│   │   │   │   ├── prize.validation.ts
+│   │   │   │   ├── prize.service.ts
+│   │   │   │   ├── prize.controller.ts
+│   │   │   │   ├── prize.route.ts
+│   │   │   │   └── prize.test.ts
+│   │   │   ├── game.service.ts (shared game logic)
+│   │   │   └── doc/
+│   │   │       └── ...
+│   │   │
 │   │   ├── review.module/
+│   │   │   ├── review/
+│   │   │   │   ├── review.constant.ts
+│   │   │   │   ├── review.interface.ts
+│   │   │   │   ├── review.model.ts
+│   │   │   │   ├── review.service.ts
+│   │   │   │   ├── review.controller.ts
+│   │   │   │   ├── review.route.ts
+│   │   │   │   └── review.test.ts
+│   │   │   └── doc/
+│   │   │       └── ...
+│   │   │
 │   │   ├── social.module/
-│   │   │   └── sub-modules/
-│   │   │       └── socialLinkClick.module/
+│   │   │   ├── socialLink/
+│   │   │   │   ├── socialLink.constant.ts
+│   │   │   │   ├── socialLink.interface.ts
+│   │   │   │   ├── socialLink.model.ts
+│   │   │   │   ├── socialLink.service.ts
+│   │   │   │   ├── socialLink.controller.ts
+│   │   │   │   ├── socialLink.route.ts
+│   │   │   │   └── socialLink.test.ts
+│   │   │   ├── socialLinkClick/
+│   │   │   │   ├── socialLinkClick.constant.ts
+│   │   │   │   ├── socialLinkClick.interface.ts
+│   │   │   │   ├── socialLinkClick.model.ts
+│   │   │   │   ├── socialLinkClick.service.ts
+│   │   │   │   ├── socialLinkClick.controller.ts
+│   │   │   │   └── socialLinkClick.route.ts
+│   │   │   └── doc/
+│   │   │       └── ...
+│   │   │
 │   │   ├── analytics.module/
-│   │   ├── report.module/
-│   │   └── user.module/
+│   │   │   ├── analytics/
+│   │   │   │   ├── analytics.constant.ts
+│   │   │   │   ├── analytics.interface.ts
+│   │   │   │   ├── analytics.model.ts
+│   │   │   │   ├── analytics.service.ts
+│   │   │   │   ├── analytics.controller.ts
+│   │   │   │   ├── analytics.route.ts
+│   │   │   │   └── analytics.test.ts
+│   │   │   └── doc/
+│   │   │       └── ...
+│   │   │
+│   │   └── report.module/
+│   │       ├── report/
+│   │       │   ├── report.constant.ts
+│   │       │   ├── report.interface.ts
+│   │       │   ├── report.model.ts
+│   │       │   ├── report.validation.ts
+│   │       │   ├── report.service.ts
+│   │       │   ├── report.controller.ts
+│   │       │   ├── report.route.ts
+│   │       │   └── report.test.ts
+│   │       └── doc/
+│   │           └── ...
 │   │
 │   ├── middleware/
 │   │   ├── authenticate.middleware.ts
@@ -272,67 +412,47 @@ prompter-card-backend/
 │   │   └── fileUpload.middleware.ts
 │   │
 │   ├── services/
-│   │   ├── generic.service.ts         # Generic CRUD operations
-│   │   ├── pagination.service.ts      # Pagination logic
-│   │   ├── cache.service.ts           # Redis cache operations
-│   │   ├── queue.service.ts           # BullMQ job management
-│   │   ├── email.service.ts           # Email notifications
-│   │   └── file.service.ts            # File upload handling
+│   │   ├── generic.service.ts
+│   │   ├── pagination.service.ts
+│   │   ├── cache.service.ts
+│   │   ├── queue.service.ts
+│   │   ├── email.service.ts
+│   │   └── file.service.ts
 │   │
 │   ├── controllers/
-│   │   └── generic.controller.ts      # Generic CRUD handlers
+│   │   └── generic.controller.ts
 │   │
 │   ├── queues/
-│   │   ├── queues.constants.ts        # Queue name constants
-│   │   ├── analytics.queue.ts         # Analytics aggregation jobs
-│   │   ├── email.queue.ts             # Email sending jobs
-│   │   ├── report.queue.ts            # Report generation jobs
-│   │   └── game.queue.ts              # Game result processing jobs
+│   │   ├── queues.constants.ts
+│   │   ├── analytics.queue.ts
+│   │   ├── email.queue.ts
+│   │   ├── report.queue.ts
+│   │   └── game.queue.ts
 │   │
 │   ├── utils/
-│   │   ├── apiResponse.ts             # Standard API response format
-│   │   ├── errorHandler.ts            # Custom error classes
-│   │   ├── logger.ts                  # Winston logger setup
-│   │   ├── qrGenerator.ts             # QR code generation
-│   │   ├── deviceFingerprint.ts       # Device fingerprinting
-│   │   └── probability.ts             # Weighted random selection
+│   │   ├── apiResponse.ts
+│   │   ├── errorHandler.ts
+│   │   ├── logger.ts
+│   │   ├── qrGenerator.ts
+│   │   ├── deviceFingerprint.ts
+│   │   └── probability.ts
 │   │
 │   ├── types/
-│   │   ├── express.d.ts               # Express type extensions
-│   │   ├── models.d.ts                # Mongoose type extensions
-│   │   └── globals.d.ts               # Global type declarations
+│   │   ├── express.d.ts
+│   │   ├── models.d.ts
+│   │   └── globals.d.ts
 │   │
 │   ├── routes/
-│   │   └── index.ts                   # Route aggregation
+│   │   └── index.ts
 │   │
-│   ├── app.ts                         # Express app setup
-│   └── server.ts                      # Server entry point
+│   ├── app.ts
+│   └── server.ts
 │
 ├── tests/
-│   ├── unit/
-│   ├── integration/
-│   └── e2e/
-│
 ├── migrations/
-│   ├── 001-initial-schema.ts
-│   ├── 002-add-indexes.ts
-│   └── ...
-│
 ├── scripts/
-│   ├── seed.ts                        # Database seeding
-│   └── create-admin.ts                # Admin user creation
-│
 ├── __Documentation/
-│   └── qwen/
-│       ├── agenda-DD-MM-YY-XXX-V1.md
-│       ├── global-module-tracker.md
-│       └── session-logs/
-│
 ├── figma-asset/
-│   ├── Product-Requirements-Document-(PRD).md
-│   ├── Product-Requirements-Document-v2-(PRD).md
-│   └── Development-Plan.md (this file)
-│
 ├── .env.example
 ├── .dockerignore
 ├── Dockerfile
@@ -383,7 +503,7 @@ prompter-card-backend/
 - `user.module`
 
 **Deliverables:**
-- [ ] User model (with roles: super_admin, business_admin, campaign_manager, promoter)
+- [ ] User model (with roles: admin, campaign_manager, promoter)
 - [ ] Session model (stored in MongoDB + Redis)
 - [ ] Auth service (register, login, logout, refresh, password reset)
 - [ ] JWT implementation (access token 15min, refresh token 7 days)
@@ -418,43 +538,7 @@ prompter-card-backend/
 
 ---
 
-### Phase 2: Business & Multi-Tenancy (Week 2-3)
-
-**Objective:** Business entity management with multi-tenancy support
-
-**Modules:**
-- `business.module`
-
-**Deliverables:**
-- [ ] Business model (slug, subscription, settings)
-- [ ] Business service (CRUD, subscription management)
-- [ ] Business validation schemas
-- [ ] Business CRUD endpoints
-- [ ] Business settings management
-- [ ] Slug generation and validation
-- [ ] Subscription plan management
-- [ ] Business-scoped queries (middleware to filter by business)
-
-**BullMQ Jobs:**
-- [ ] Business analytics aggregation
-
-**Redis Caching:**
-- [ ] Business details cache (TTL: 30 minutes)
-- [ ] Business settings cache (TTL: 1 hour)
-
-**Database Indexes:**
-- [ ] Business: slug (unique), subscriptionStatus, subscriptionExpiresAt
-
-**Documentation:**
-- [ ] Business module diagrams
-- [ ] Business performance report
-
-**Risk Level:** Low  
-**Dependencies:** Phase 1  
-
----
-
-### Phase 3: Landing Page Management (Week 3-4)
+### Phase 2: Landing Page Management (Week 2-3)
 
 **Objective:** Landing page CRUD with block-based customization
 
@@ -481,7 +565,7 @@ prompter-card-backend/
 - [ ] Admin landing page list cache (TTL: 2 minutes)
 
 **Database Indexes:**
-- [ ] LandingPage: business + slug (unique compound), status, publishedAt
+- [ ] LandingPage: slug (unique), status, publishedAt
 
 **Documentation:**
 - [ ] LandingPage module diagrams
@@ -489,11 +573,11 @@ prompter-card-backend/
 - [ ] Public landing page flow diagrams
 
 **Risk Level:** Medium  
-**Dependencies:** Phase 2  
+**Dependencies:** Phase 1  
 
 ---
 
-### Phase 4: Promoter Management (Week 4-5)
+### Phase 3: Promoter Management (Week 3-4)
 
 **Objective:** Promoter CRUD and performance tracking
 
@@ -520,7 +604,7 @@ prompter-card-backend/
 - [ ] Leaderboard cache using Redis sorted sets (TTL: 5 minutes)
 
 **Database Indexes:**
-- [ ] Promoter: business + totalInteractions (compound), status, text index (name, nickname)
+- [ ] Promoter: totalInteractions, status, text index (name, nickname)
 - [ ] PromoterSelection: promoter, landingPage + promoter
 
 **Documentation:**
@@ -529,11 +613,11 @@ prompter-card-backend/
 - [ ] Leaderboard algorithm documentation
 
 **Risk Level:** Low  
-**Dependencies:** Phase 3  
+**Dependencies:** Phase 2  
 
 ---
 
-### Phase 5: Campaign & Event Management (Week 5-6)
+### Phase 4: Campaign & Event Management (Week 4-5)
 
 **Objective:** Campaign and event lifecycle management
 
@@ -562,7 +646,7 @@ prompter-card-backend/
 - [ ] Upcoming events cache (TTL: 5 minutes)
 
 **Database Indexes:**
-- [ ] Campaign: business, status + startDate + endDate, landingPage
+- [ ] Campaign: status + startDate + endDate, landingPage
 - [ ] Event: campaign, eventDate
 
 **Documentation:**
@@ -571,11 +655,11 @@ prompter-card-backend/
 - [ ] Campaign state machine diagram
 
 **Risk Level:** Low  
-**Dependencies:** Phase 4  
+**Dependencies:** Phase 3  
 
 ---
 
-### Phase 6: Card Management (Week 6-7)
+### Phase 5: Card Management (Week 5-6)
 
 **Objective:** NFC card and QR code management
 
@@ -604,7 +688,7 @@ prompter-card-backend/
 - [ ] Card details cache (TTL: 15 minutes)
 
 **Database Indexes:**
-- [ ] Card: nfcUuid (unique, sparse), promoter + status, business
+- [ ] Card: nfcUuid (unique, sparse), promoter + status
 - [ ] CardInteraction: card + createdAt, createdAt
 
 **Documentation:**
@@ -613,11 +697,11 @@ prompter-card-backend/
 - [ ] Card performance report
 
 **Risk Level:** Medium (NFC integration complexity)  
-**Dependencies:** Phase 5  
+**Dependencies:** Phase 4  
 
 ---
 
-### Phase 7: Participant Management (Week 7-8)
+### Phase 6: Participant Management (Week 6-7)
 
 **Objective:** Participant data capture and management
 
@@ -653,11 +737,11 @@ prompter-card-backend/
 - [ ] Participant performance report
 
 **Risk Level:** Low  
-**Dependencies:** Phase 6  
+**Dependencies:** Phase 5  
 
 ---
 
-### Phase 8: Game Engine (Week 8-9)
+### Phase 7: Game Engine (Week 7-8)
 
 **Objective:** Game interaction handling with fraud prevention
 
@@ -700,11 +784,11 @@ prompter-card-backend/
 - [ ] Game performance report
 
 **Risk Level:** High (fraud prevention complexity)  
-**Dependencies:** Phase 7  
+**Dependencies:** Phase 6  
 
 ---
 
-### Phase 9: Review & Social Tracking (Week 9-10)
+### Phase 8: Review & Social Tracking (Week 8-9)
 
 **Objective:** Review click tracking and social link analytics
 
@@ -747,11 +831,11 @@ prompter-card-backend/
 - [ ] Review tracking limitations documentation
 
 **Risk Level:** Low  
-**Dependencies:** Phase 8  
+**Dependencies:** Phase 7  
 
 ---
 
-### Phase 10: Analytics Dashboard (Week 10-11)
+### Phase 9: Analytics Dashboard (Week 9-10)
 
 **Objective:** Comprehensive analytics and reporting
 
@@ -781,7 +865,7 @@ prompter-card-backend/
 - [ ] Trend data cache (TTL: 5 minutes)
 
 **Database Indexes:**
-- [ ] AnalyticsDaily: business + date (unique compound), date
+- [ ] AnalyticsDaily: date (unique)
 
 **Documentation:**
 - [ ] Analytics module diagrams
@@ -789,11 +873,11 @@ prompter-card-backend/
 - [ ] Analytics performance report
 
 **Risk Level:** Medium (complex aggregation pipelines)  
-**Dependencies:** Phase 9  
+**Dependencies:** Phase 8  
 
 ---
 
-### Phase 11: Report Generation (Week 11-12)
+### Phase 10: Report Generation (Week 10-11)
 
 **Objective:** Report generation and data export
 
@@ -823,18 +907,18 @@ prompter-card-backend/
 - [ ] Report list cache (TTL: 1 minute)
 
 **Database Indexes:**
-- [ ] Report: business + status + createdAt, completedAt
+- [ ] Report: status + createdAt, completedAt
 
 **Documentation:**
 - [ ] Report module diagrams
 - [ ] Export format specifications
 
 **Risk Level:** Medium (file generation complexity)  
-**Dependencies:** Phase 10  
+**Dependencies:** Phase 9  
 
 ---
 
-### Phase 12: Integration & Polish (Week 12-13)
+### Phase 11: Integration & Polish (Week 11-12)
 
 **Objective:** Third-party integrations and production readiness
 
@@ -868,11 +952,11 @@ prompter-card-backend/
 - [ ] Operations manual
 
 **Risk Level:** Low  
-**Dependencies:** Phase 11  
+**Dependencies:** Phase 10  
 
 ---
 
-### Phase 13: Testing & QA (Week 13-14)
+### Phase 12: Testing & QA (Week 12-13)
 
 **Objective:** Comprehensive testing and quality assurance
 
@@ -893,17 +977,17 @@ prompter-card-backend/
 - E2E tests: All critical flows
 
 **Risk Level:** Low  
-**Dependencies:** Phase 12  
+**Dependencies:** Phase 11  
 
 ---
 
-### Phase 14: Deployment & Launch (Week 14-15)
+### Phase 13: Deployment & Launch (Week 13-14)
 
 **Objective:** Production deployment and launch
 
 **Deliverables:**
 - [ ] Production environment setup
-- [ ] MongoDB Atlas cluster setup
+- [ ] MongoDB cluster setup
 - [ ] Redis cluster setup
 - [ ] CI/CD pipeline configuration
 - [ ] Monitoring setup (Datadog/New Relic)
@@ -915,7 +999,7 @@ prompter-card-backend/
 - [ ] Post-launch monitoring
 
 **Risk Level:** Medium  
-**Dependencies:** Phase 13  
+**Dependencies:** Phase 12  
 
 ---
 
@@ -927,20 +1011,20 @@ prompter-card-backend/
 |----------|--------|-----------|
 | **P0** | Foundation (Phase 0) | Core infrastructure, required by all modules |
 | **P0** | Auth (Phase 1) | Security foundation, required by all authenticated endpoints |
-| **P0** | Business (Phase 2) | Multi-tenancy, required by all business-scoped modules |
-| **P0** | LandingPage (Phase 3) | Core entity, referenced by most modules |
-| **P0** | Promoter (Phase 4) | Core entity, required for campaigns and cards |
-| **P0** | Campaign (Phase 5) | Core entity, required for events and participants |
-| **P0** | Card (Phase 6) | Core entity, primary interaction mechanism |
-| **P0** | Participant (Phase 7) | Core entity, captures user data |
-| **P0** | Game (Phase 8) | Core engagement feature |
-| **P1** | Review (Phase 9) | Important but not blocking |
-| **P1** | Social (Phase 9) | Important but not blocking |
-| **P1** | Analytics (Phase 10) | Requires data from other modules |
-| **P1** | Report (Phase 11) | Requires data from other modules |
-| **P2** | Integration (Phase 12) | Third-party integrations |
-| **P2** | Testing (Phase 13) | QA phase |
-| **P2** | Deployment (Phase 14) | Launch phase |
+| **P0** | User (Phase 1) | User management, required by auth |
+| **P0** | LandingPage (Phase 2) | Core entity, referenced by most modules |
+| **P0** | Promoter (Phase 3) | Core entity, required for campaigns and cards |
+| **P0** | Campaign (Phase 4) | Core entity, required for events and participants |
+| **P0** | Card (Phase 5) | Core entity, primary interaction mechanism |
+| **P0** | Participant (Phase 6) | Core entity, captures user data |
+| **P0** | Game (Phase 7) | Core engagement feature |
+| **P1** | Review (Phase 8) | Important but not blocking |
+| **P1** | Social (Phase 8) | Important but not blocking |
+| **P1** | Analytics (Phase 9) | Requires data from other modules |
+| **P1** | Report (Phase 10) | Requires data from other modules |
+| **P2** | Integration (Phase 11) | Third-party integrations |
+| **P2** | Testing (Phase 12) | QA phase |
+| **P2** | Deployment (Phase 13) | Launch phase |
 
 ---
 
@@ -1013,7 +1097,6 @@ export async function createIndexes() {
   
   // All other indexes
   await Promise.all([
-    Business.createIndexes(),
     User.createIndexes(),
     Promoter.createIndexes(),
     Campaign.createIndexes(),
@@ -1045,14 +1128,14 @@ export async function createIndexes() {
 **Example:**
 ```typescript
 // ✅ Good: Lean query with projection
-const promoters = await Promoter.find({ business: businessId, status: 'active' })
+const promoters = await Promoter.find({ status: 'active' })
   .select('name nickname totalInteractions avatarUrl')
   .sort({ totalInteractions: -1 })
   .limit(20)
   .lean();
 
 // ❌ Bad: Full document return without lean
-const promoters = await Promoter.find({ business: businessId });
+const promoters = await Promoter.find({ status: 'active' });
 ```
 
 ---
@@ -1152,17 +1235,26 @@ export const cacheService = new CacheService();
 ### 8.3 Cache Key Naming Convention
 
 ```
-Format: <module>:<id>:<datatype>
+Format: <module>:<identifier>:<datatype>
 
 Examples:
-  landingpage:abc123:detail          # Single landing page
-  business:xyz789:settings           # Business settings
-  promoter:promo001:profile          # Promoter profile
-  card:card123:detail                # Card details
-  leaderboard:biz456:weekly          # Promoter leaderboard
-  analytics:biz456:overview:7days    # Analytics overview
-  public:page:azure-beach            # Public landing page
-  nfc:uuid:card123                   # NFC UUID resolution
+  landingpage:public:azure-beach          # Public landing page
+  landingpage:list:1                      # Landing page list (page 1)
+  promoter:profile:promo001               # Promoter profile
+  promoter:leaderboard                    # Promoter leaderboard
+  card:detail:card123                     # Card details
+  card:nfc:uuid12345                      # NFC UUID resolution
+  campaign:list:active                    # Campaign list (active)
+  event:upcoming                          # Upcoming events
+  participant:count                       # Participant count
+  game:stats:7d                           # Game statistics (7 days)
+  prize:config:page123                    # Prize configuration
+  review:stats:7d                         # Review statistics (7 days)
+  sociallink:list:page123                 # Social link list
+  sociallink:analytics:7d                 # Social analytics (7 days)
+  analytics:overview:7d                   # Analytics overview (7 days)
+  report:list:pending                     # Report list (pending)
+  session:user123:device456               # Session data
 ```
 
 ### 8.4 TTL by Data Type
@@ -1170,16 +1262,23 @@ Examples:
 | Data Type | TTL | Rationale |
 |-----------|-----|-----------|
 | User profile | 15 minutes | Moderate freshness |
-| Business settings | 1 hour | Rarely changes |
-| Landing page (admin) | 2 minutes | Frequent edits |
 | Landing page (public) | 5 minutes | Published, stable |
+| Landing page list | 2 minutes | Frequent edits |
 | Promoter profile | 15 minutes | Moderate freshness |
 | Leaderboard | 5 minutes | Near real-time |
-| Analytics overview | 1 minute | High-frequency updates |
 | Card details | 15 minutes | Moderate freshness |
 | NFC UUID resolution | 1 hour | Static mapping |
+| Campaign list | 2 minutes | Moderate updates |
+| Upcoming events | 5 minutes | Near real-time |
+| Participant count | 2 minutes | Frequent updates |
 | Game statistics | 2 minutes | Near real-time |
-| Session data | 7 days | Match refresh token |
+| Prize config | 15 minutes | Rarely changes |
+| Review statistics | 2 minutes | Frequent updates |
+| Social link list | 15 minutes | Rarely changes |
+| Social analytics | 5 minutes | Near real-time |
+| Dashboard metrics | 1 minute | High-frequency updates |
+| Report list | 1 minute | Frequent updates |
+| Session | 7 days | Match refresh token |
 
 ### 8.5 Cache Invalidation Strategy
 
@@ -1190,9 +1289,9 @@ async function updateLandingPage(id: string, data: UpdateLandingPageDto) {
   const updatedPage = await LandingPage.findByIdAndUpdate(id, data, { new: true });
 
   // Invalidate cache
-  await cacheService.delete(`landingpage:${id}:detail`);
-  await cacheService.delete(`public:page:${updatedPage.slug}`);
-  await cacheService.deletePattern(`business:${updatedPage.business}:landingpages:*`);
+  await cacheService.delete(`landingpage:detail:${id}`);
+  await cacheService.delete(`landingpage:public:${updatedPage.slug}`);
+  await cacheService.deletePattern(`landingpage:list:*`);
 
   return updatedPage;
 }
@@ -1303,7 +1402,6 @@ export const queueService = new QueueService();
 - ✅ File processing
 - ✅ Analytics aggregation
 - ✅ Bulk operations (> 100 records)
-- ✅ Scheduled tasks
 
 **Example:**
 ```typescript
@@ -1314,7 +1412,6 @@ async generateReport(req: Request, res: Response) {
     QUEUE_NAMES.STANDARD,
     'generate-report',
     {
-      businessId: req.business.id,
       reportType: req.body.reportType,
       format: req.body.format,
       parameters: req.body.parameters,
@@ -1360,7 +1457,7 @@ import { landingPageService } from './landingPage.service';
 const genericController = new GenericController();
 
 /*-─────────────────────────────────
-|  Role: Business Admin | Module: Landing Page
+|  Role: Admin | Module: Landing Page
 |  Figma: landing-pages/landing-page-builder-01.png
 |  Action: Get all landing pages with pagination
 |  Auth: Required
@@ -1369,7 +1466,7 @@ const genericController = new GenericController();
 router.get(
   '/',
   authenticate,
-  authorize('business_admin', 'campaign_manager'),
+  authorize('admin', 'campaign_manager'),
   rateLimiter('user'),
   genericController.getAllWithPaginationV2(landingPageService.getAll)
 );
@@ -1389,7 +1486,7 @@ class LandingPageService extends GenericService<ILandingPage> {
 
   async getAll(query: any, options: any) {
     // Custom query logic
-    const filter = { business: query.business, ...super.buildFilter(query) };
+    const filter = { ...super.buildFilter(query) };
     return this.model.find(filter)
       .select('title slug status publishedAt')
       .sort({ createdAt: -1 })
@@ -1482,15 +1579,13 @@ describe('GameService', () => {
 // tests/integration/landingPage.test.ts
 describe('LandingPage API', () => {
   let authToken: string;
-  let businessId: string;
 
   beforeAll(async () => {
-    // Setup test user and business
+    // Setup test user
     const loginResponse = await request(app)
       .post('/api/v1/auth/login')
       .send({ email: 'test@example.com', password: 'password' });
     authToken = loginResponse.body.data.accessToken;
-    businessId = loginResponse.body.data.businessId;
   });
 
   describe('GET /api/v1/landing-pages', () => {
@@ -1590,7 +1685,6 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
 
     const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET!) as {
       userId: string;
-      businessId: string;
     };
 
     const user = await User.findById(decoded.userId).select('-passwordHash').lean();
@@ -1599,7 +1693,6 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
     }
 
     req.user = user;
-    req.businessId = decoded.businessId;
     next();
   } catch (error) {
     next(new AuthenticationError('Invalid token'));
@@ -1625,7 +1718,7 @@ async refreshToken(refreshToken: string) {
   }
 
   // Generate new tokens
-  const newAccessToken = this.generateAccessToken(session.userId, session.businessId);
+  const newAccessToken = this.generateAccessToken(session.userId);
   const newRefreshToken = generateRandomToken();
 
   // Update session
@@ -1855,7 +1948,7 @@ export const errorHandler = (err: Error, req: Request, res: Response, next: Next
 Production Environment:
   - Load Balancer: AWS ALB / NGINX
   - App Servers: 3+ EC2 instances (auto-scaling)
-  - MongoDB: Atlas M10+ cluster (3-node replica set)
+  - MongoDB: M10+ cluster (3-node replica set)
   - Redis: ElastiCache cluster (2 nodes)
   - File Storage: S3
   - CDN: Cloudflare
@@ -2159,21 +2252,20 @@ Every module MUST have `/doc` folder containing:
 
 ---
 
-### Sprint 3: Business & Landing Pages (Week 2-3)
+### Sprint 3: Landing Pages (Week 2-3)
 
 **Goals:**
-- Business module
 - Landing page module
 - Public landing page endpoint
 
 **Deliverables:**
-- Complete Phase 2-3
+- Complete Phase 2
 
 **Story Points:** 13
 
 ---
 
-### Sprint 4: Promoters & Campaigns (Week 4-5)
+### Sprint 4: Promoters & Campaigns (Week 3-5)
 
 **Goals:**
 - Promoter module
@@ -2181,13 +2273,13 @@ Every module MUST have `/doc` folder containing:
 - Event module
 
 **Deliverables:**
-- Complete Phase 4-5
+- Complete Phase 3-4
 
 **Story Points:** 13
 
 ---
 
-### Sprint 5: Cards & Participants (Week 6-7)
+### Sprint 5: Cards & Participants (Week 5-7)
 
 **Goals:**
 - Card module
@@ -2195,13 +2287,13 @@ Every module MUST have `/doc` folder containing:
 - Participant module
 
 **Deliverables:**
-- Complete Phase 6-7
+- Complete Phase 5-6
 
 **Story Points:** 13
 
 ---
 
-### Sprint 6: Game Engine (Week 8-9)
+### Sprint 6: Game Engine (Week 7-8)
 
 **Goals:**
 - Game module
@@ -2209,13 +2301,13 @@ Every module MUST have `/doc` folder containing:
 - Fraud prevention
 
 **Deliverables:**
-- Complete Phase 8
+- Complete Phase 7
 
 **Story Points:** 13
 
 ---
 
-### Sprint 7: Reviews & Social (Week 9-10)
+### Sprint 7: Reviews & Social (Week 8-9)
 
 **Goals:**
 - Review module
@@ -2223,13 +2315,13 @@ Every module MUST have `/doc` folder containing:
 - Click tracking
 
 **Deliverables:**
-- Complete Phase 9
+- Complete Phase 8
 
 **Story Points:** 8
 
 ---
 
-### Sprint 8: Analytics & Reports (Week 10-12)
+### Sprint 8: Analytics & Reports (Week 9-11)
 
 **Goals:**
 - Analytics module
@@ -2237,13 +2329,13 @@ Every module MUST have `/doc` folder containing:
 - Export functionality
 
 **Deliverables:**
-- Complete Phase 10-11
+- Complete Phase 9-10
 
 **Story Points:** 13
 
 ---
 
-### Sprint 9: Integration & Testing (Week 12-14)
+### Sprint 9: Integration & Testing (Week 11-13)
 
 **Goals:**
 - Third-party integrations
@@ -2253,13 +2345,13 @@ Every module MUST have `/doc` folder containing:
 - Performance optimization
 
 **Deliverables:**
-- Complete Phase 12-13
+- Complete Phase 11-12
 
 **Story Points:** 13
 
 ---
 
-### Sprint 10: Deployment & Launch (Week 14-15)
+### Sprint 10: Deployment & Launch (Week 13-14)
 
 **Goals:**
 - Production setup
@@ -2268,14 +2360,14 @@ Every module MUST have `/doc` folder containing:
 - Launch
 
 **Deliverables:**
-- Complete Phase 14
+- Complete Phase 13
 
 **Story Points:** 8
 
 ---
 
 **Total Story Points:** 118  
-**Total Duration:** 15 weeks (~3.5 months)
+**Total Duration:** 14 weeks (~3.5 months)
 
 ---
 
