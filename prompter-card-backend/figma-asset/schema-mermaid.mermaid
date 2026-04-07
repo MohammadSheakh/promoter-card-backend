@@ -1,0 +1,285 @@
+erDiagram
+    %% ═══════════════════════════════════════════════════════════
+    %% AUTH & USER MODULE
+    %% ═══════════════════════════════════════════════════════════
+    
+    User {
+        ObjectId _id PK "Unique identifier"
+        String email "User email (unique)"
+        String passwordHash "Bcrypt hashed password"
+        String name "Full name"
+        Enum role "admin | campaign_manager | promoter"
+        Enum status "active | inactive | suspended"
+        Boolean emailVerified "Email verification status"
+        Date lastLoginAt "Last login timestamp"
+        Date createdAt "Auto-generated"
+        Date updatedAt "Auto-generated"
+    }
+    
+    Session {
+        ObjectId _id PK "Unique identifier"
+        ObjectId userId FK "References User._id"
+        String tokenHash "Hashed refresh token"
+        Date expiresAt "Token expiry (TTL index)"
+        String ipAddress "Client IP address"
+        String userAgent "Browser/device info"
+        Date createdAt "Auto-generated"
+    }
+    
+    %% ═══════════════════════════════════════════════════════════
+    %% LANDING PAGE MODULE
+    %% ═══════════════════════════════════════════════════════════
+    
+    LandingPage {
+        ObjectId _id PK "Unique identifier"
+        String slug "URL slug (unique)"
+        String title "Page title"
+        Enum status "draft | published | archived"
+        Object blocks "Flexible page block schema"
+        Array promoters "References Promoter._id[]"
+        Object settings "Page configuration"
+        Date publishedAt "Publish timestamp"
+        Date createdAt "Auto-generated"
+        Date updatedAt "Auto-generated"
+    }
+    
+    %% ═══════════════════════════════════════════════════════════
+    %% PROMOTER MODULE
+    %% ═══════════════════════════════════════════════════════════
+    
+    Promoter {
+        ObjectId _id PK "Unique identifier"
+        String name "Promoter full name"
+        String nickname "Nickname for review matching"
+        String email "Contact email"
+        String phone "Contact phone"
+        String avatarUrl "Profile image URL"
+        Enum status "active | inactive"
+        Number totalInteractions "Cached interaction count"
+        Number totalSignups "Cached signup count"
+        Number totalReviews "Cached review count"
+        Object metadata "Additional data"
+        Date createdAt "Auto-generated"
+        Date updatedAt "Auto-generated"
+    }
+    
+    PromoterSelection {
+        ObjectId _id PK "Unique identifier"
+        ObjectId landingPageId FK "References LandingPage._id"
+        ObjectId promoterId FK "References Promoter._id"
+        ObjectId participantId FK "References Participant._id"
+        Date createdAt "Auto-generated"
+    }
+    
+    %% ═══════════════════════════════════════════════════════════
+    %% CAMPAIGN & EVENT MODULE
+    %% ═══════════════════════════════════════════════════════════
+    
+    Campaign {
+        ObjectId _id PK "Unique identifier"
+        ObjectId landingPageId FK "References LandingPage._id"
+        String name "Campaign name"
+        String venueName "Venue/location name"
+        String description "Campaign description"
+        Date startDate "Campaign start date"
+        Date endDate "Campaign end date"
+        Enum status "scheduled | active | completed | archived"
+        Number totalInteractions "Cached count"
+        Number totalSignups "Cached count"
+        Number totalPrizes "Cached count"
+        Object settings "Campaign config"
+        Array events "References Event._id[]"
+        Date createdAt "Auto-generated"
+        Date updatedAt "Auto-generated"
+    }
+    
+    Event {
+        ObjectId _id PK "Unique identifier"
+        ObjectId campaignId FK "References Campaign._id"
+        String name "Event name"
+        String venueName "Venue name"
+        Date eventDate "Event date/time"
+        Number totalSignups "Cached signup count"
+        Object settings "Event config"
+        Date createdAt "Auto-generated"
+    }
+    
+    %% ═══════════════════════════════════════════════════════════
+    %% CARD MODULE
+    %% ═══════════════════════════════════════════════════════════
+    
+    Card {
+        ObjectId _id PK "Unique identifier"
+        ObjectId promoterId FK "References Promoter._id"
+        ObjectId landingPageId FK "References LandingPage._id"
+        Enum cardType "nfc | qr_code"
+        String nfcUuid "NFC UUID (unique, sparse)"
+        String qrCodeUrl "Generated QR code URL"
+        String name "Card name"
+        Enum status "active | inactive | lost | replaced"
+        Number totalInteractions "Cached tap count"
+        Date lastTapAt "Last tap timestamp"
+        Object metadata "Additional data"
+        Date createdAt "Auto-generated"
+        Date updatedAt "Auto-generated"
+    }
+    
+    CardInteraction {
+        ObjectId _id PK "Unique identifier"
+        ObjectId cardId FK "References Card._id"
+        ObjectId participantId FK "References Participant._id"
+        String ipAddress "Client IP"
+        String deviceInfo "Device information"
+        String userAgent "Browser info"
+        Date createdAt "Auto-generated"
+    }
+    
+    %% ═══════════════════════════════════════════════════════════
+    %% PARTICIPANT MODULE
+    %% ═══════════════════════════════════════════════════════════
+    
+    Participant {
+        ObjectId _id PK "Unique identifier"
+        ObjectId landingPageId FK "References LandingPage._id"
+        ObjectId campaignId FK "References Campaign._id"
+        ObjectId promoterId FK "References Promoter._id"
+        String name "Participant name"
+        String email "Participant email"
+        String phone "Participant phone"
+        Enum status "confirmed | pending | bounced"
+        String prizeWon "Prize won from game"
+        String source "Traffic source"
+        Boolean consentGiven "GDPR consent flag"
+        Object metadata "Additional data"
+        Date createdAt "Auto-generated"
+        Date updatedAt "Auto-generated"
+    }
+    
+    %% ═══════════════════════════════════════════════════════════
+    %% GAME MODULE
+    %% ═══════════════════════════════════════════════════════════
+    
+    GamePlay {
+        ObjectId _id PK "Unique identifier"
+        ObjectId landingPageId FK "References LandingPage._id"
+        ObjectId participantId FK "References Participant._id"
+        Enum gameType "dice_roll | spin_wheel"
+        String result "Prize won"
+        Boolean redeemed "Redemption status"
+        Date redeemedAt "Redemption timestamp"
+        String ipAddress "Client IP"
+        String deviceFingerprint "Device fingerprint"
+        String sessionId "Session identifier"
+        Date createdAt "Auto-generated"
+    }
+    
+    Prize {
+        ObjectId _id PK "Unique identifier"
+        ObjectId landingPageId FK "References LandingPage._id"
+        String name "Prize name"
+        Number probability "Win probability (0-1)"
+        Number maxRedemptions "Max redemption limit"
+        Number currentRedemptions "Current redemption count"
+        Boolean active "Prize active status"
+        Number displayOrder "Display order"
+        Date createdAt "Auto-generated"
+    }
+    
+    %% ═══════════════════════════════════════════════════════════
+    %% REVIEW MODULE
+    %% ═══════════════════════════════════════════════════════════
+    
+    ReviewClick {
+        ObjectId _id PK "Unique identifier"
+        ObjectId landingPageId FK "References LandingPage._id"
+        ObjectId participantId FK "References Participant._id"
+        ObjectId promoterId FK "References Promoter._id"
+        String googleReviewUrl "Google review URL"
+        Boolean clicked "Click status"
+        Date createdAt "Auto-generated"
+    }
+    
+    %% ═══════════════════════════════════════════════════════════
+    %% SOCIAL MODULE
+    %% ═══════════════════════════════════════════════════════════
+    
+    SocialLink {
+        ObjectId _id PK "Unique identifier"
+        ObjectId landingPageId FK "References LandingPage._id"
+        Enum platform "instagram | tiktok | whatsapp | facebook | website | custom"
+        String label "Display label"
+        String url "Social URL"
+        Number displayOrder "Display order"
+        Boolean active "Link active status"
+        Date createdAt "Auto-generated"
+    }
+    
+    SocialLinkClick {
+        ObjectId _id PK "Unique identifier"
+        ObjectId socialLinkId FK "References SocialLink._id"
+        ObjectId participantId FK "References Participant._id"
+        String ipAddress "Client IP"
+        String userAgent "Browser info"
+        Date createdAt "Auto-generated"
+    }
+    
+    %% ═══════════════════════════════════════════════════════════
+    %% ANALYTICS MODULE
+    %% ═══════════════════════════════════════════════════════════
+    
+    AnalyticsDaily {
+        ObjectId _id PK "Unique identifier"
+        Date date "Aggregation date (unique)"
+        Number totalInteractions "Daily interaction count"
+        Number uniqueVisitors "Daily unique visitors"
+        Number returnVisitors "Daily return visitors"
+        Number totalSignups "Daily signup count"
+        Number totalGamePlays "Daily game plays"
+        Number totalReviewClicks "Daily review clicks"
+        Number totalSocialClicks "Daily social clicks"
+        Date createdAt "Auto-generated"
+    }
+    
+    %% ═══════════════════════════════════════════════════════════
+    %% REPORT MODULE
+    %% ═══════════════════════════════════════════════════════════
+    
+    Report {
+        ObjectId _id PK "Unique identifier"
+        Enum reportType "monthly_performance | audience_data | engagement | game_performance"
+        Enum format "pdf | csv | excel | json"
+        Enum status "pending | completed | failed"
+        String fileUrl "Download URL (S3)"
+        Number fileSize "File size in bytes"
+        Object parameters "Report parameters"
+        String errorMessage "Error details if failed"
+        Date completedAt "Completion timestamp"
+        Date createdAt "Auto-generated"
+    }
+    
+    %% ═══════════════════════════════════════════════════════════
+    %% RELATIONSHIPS
+    %% ═══════════════════════════════════════════════════════════
+    
+    User ||--o{ Session : "has"
+    LandingPage }o--o{ Promoter : "assigned_to"
+    LandingPage ||--o{ Campaign : "used_by"
+    LandingPage ||--o{ Card : "linked_to"
+    LandingPage ||--o{ Participant : "collects"
+    LandingPage ||--o{ GamePlay : "hosts"
+    LandingPage ||--o{ Prize : "offers"
+    LandingPage ||--o{ ReviewClick : "tracks"
+    LandingPage ||--o{ SocialLink : "displays"
+    LandingPage ||--o{ PromoterSelection : "records"
+    Promoter ||--o{ Card : "assigned"
+    Promoter ||--o{ PromoterSelection : "receives"
+    Promoter ||--o{ ReviewClick : "attributed_to"
+    Campaign ||--o{ Event : "contains"
+    Campaign ||--o{ Participant : "collects"
+    Card ||--o{ CardInteraction : "records"
+    Participant ||--o{ GamePlay : "plays"
+    Participant ||--o{ ReviewClick : "clicks"
+    Participant ||--o{ SocialLinkClick : "clicks"
+    Participant ||--o{ CardInteraction : "generates"
+    Participant ||--o{ PromoterSelection : "selects"
+    SocialLink ||--o{ SocialLinkClick : "tracks"
