@@ -430,7 +430,10 @@ erDiagram
 ```
 
 **Table Description:**  
-Tracks clicks on social links. Used for analytics to see which platforms drive most engagement. High-volume collection.
+Tracks clicks on social links. 
+Used for analytics to see which 
+platforms drive most engagement. 
+High-volume collection.
 
 **Purpose:** Social engagement tracking, platform analytics  
 **Relationships:**

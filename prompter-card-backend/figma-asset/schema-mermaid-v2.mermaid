@@ -1,0 +1,384 @@
+erDiagram
+    %% ═══════════════════════════════════════════════════════════
+    %% AUTH MODULE
+    %% ═══════════════════════════════════════════════════════════
+    
+    subgraph Auth
+        direction TB
+        User {
+            ObjectId _id PK "Unique identifier"
+            String email "Unique email for login"
+            String passwordHash "Bcrypt hashed password (cost 12)"
+            String name "Full name of user"
+            Enum role "admin | campaign_manager | promoter"
+            Enum status "active | inactive | suspended"
+            Boolean emailVerified "Track email verification status"
+            Date lastLoginAt "Track last login for security"
+            Date createdAt "Auto-generated creation timestamp"
+            Date updatedAt "Auto-generated update timestamp"
+        }
+        
+        Session {
+            ObjectId _id PK "Unique identifier"
+            ObjectId userId FK "References User._id"
+            String tokenHash "Hashed refresh token for security"
+            Date expiresAt "Token expiry with TTL index"
+            String ipAddress "Track login location"
+            String userAgent "Track device/browser info"
+            Date createdAt "Auto-generated creation timestamp"
+        }
+        
+        User ||--o{ Session : "has sessions"
+    end
+    
+    %% Table Description: User
+    %% Stores all system users (admins, campaign managers, promoters).
+    %% Single-tenant means all users belong to the same business.
+    %% Role-based access control determines what each user can do.
+    
+    %% Table Description: Session
+    %% Manages user sessions for JWT refresh tokens.
+    %% TTL index auto-cleans expired sessions.
+    %% Token rotation on every refresh prevents token theft.
+
+    %% ═══════════════════════════════════════════════════════════
+    %% LANDING PAGE MODULE
+    %% ═══════════════════════════════════════════════════════════
+    
+    subgraph Landing_Page_Module
+        direction TB
+        LandingPage {
+            ObjectId _id PK "Unique identifier"
+            String slug "Unique URL slug (promotercard.com/slug)"
+            String title "Page title for admin reference"
+            Enum status "draft | published | archived"
+            Object blocks "Flexible page blocks (hero, game, social)"
+            Array promoters "References Promoter._id[]"
+            Object settings "Page configuration settings"
+            Date publishedAt "Track when page went live"
+            Date createdAt "Auto-generated creation timestamp"
+            Date updatedAt "Auto-generated update timestamp"
+        }
+        
+        SocialLink {
+            ObjectId _id PK "Unique identifier"
+            ObjectId landingPageId FK "References LandingPage._id"
+            Enum platform "instagram | tiktok | whatsapp | facebook | website | custom"
+            String label "Display label"
+            String url "Social URL"
+            Number displayOrder "Display order"
+            Boolean active "Link active status"
+            Date createdAt "Auto-generated creation timestamp"
+        }
+        
+        SocialLinkClick {
+            ObjectId _id PK "Unique identifier"
+            ObjectId socialLinkId FK "References SocialLink._id"
+            ObjectId participantId FK "References Participant._id"
+            String ipAddress "Client IP"
+            String userAgent "Browser info"
+            Date createdAt "Auto-generated creation timestamp"
+        }
+        
+        LandingPage ||--o{ SocialLink : "displays links"
+        SocialLink ||--o{ SocialLinkClick : "tracks clicks"
+    end
+    
+    %% Table Description: LandingPage
+    %% Core entity - every NFC card points to a landing page.
+    %% Blocks are flexible (hero, event details, game, social links, contact info).
+    %% Slug must be unique for URL routing.
+    
+    %% Table Description: SocialLink
+    %% Social media links displayed on landing pages.
+    %% Platform enum for categorization.
+    %% Click tracking for engagement analytics.
+    
+    %% Table Description: SocialLinkClick
+    %% Tracks clicks on social links.
+    %% Used for analytics to see which platforms drive most engagement.
+    %% High-volume collection.
+
+    %% ═══════════════════════════════════════════════════════════
+    %% PROMOTER & CAMPAIGN MODULE (GROUPED)
+    %% ═══════════════════════════════════════════════════════════
+    
+    subgraph Promoter_Campaign
+        direction TB
+        Promoter {
+            ObjectId _id PK "Unique identifier"
+            String name "Promoter full name"
+            String nickname "Nickname for review matching"
+            String email "Contact email"
+            String phone "Contact phone"
+            String avatarUrl "Profile image URL"
+            Enum status "active | inactive"
+            Number totalInteractions "Cached interaction count"
+            Number totalSignups "Cached signup count"
+            Number totalReviews "Cached review count"
+            Object metadata "Additional data"
+            Date createdAt "Auto-generated creation timestamp"
+            Date updatedAt "Auto-generated update timestamp"
+        }
+        
+        Campaign {
+            ObjectId _id PK "Unique identifier"
+            ObjectId landingPageId FK "References LandingPage._id"
+            String name "Campaign name"
+            String venueName "Venue/location name"
+            String description "Campaign description"
+            Date startDate "Campaign start date"
+            Date endDate "Campaign end date"
+            Enum status "scheduled | active | completed | archived"
+            Number totalInteractions "Cached count"
+            Number totalSignups "Cached count"
+            Number totalPrizes "Cached count"
+            Object settings "Campaign config"
+            Array events "References Event._id[]"
+            Date createdAt "Auto-generated creation timestamp"
+            Date updatedAt "Auto-generated update timestamp"
+        }
+        
+        Event {
+            ObjectId _id PK "Unique identifier"
+            ObjectId campaignId FK "References Campaign._id"
+            String name "Event name"
+            String venueName "Venue name"
+            Date eventDate "Event date/time"
+            Number totalSignups "Cached signup count"
+            Object settings "Event config"
+            Date createdAt "Auto-generated creation timestamp"
+        }
+        
+        PromoterSelection {
+            ObjectId _id PK "Unique identifier"
+            ObjectId landingPageId FK "References LandingPage._id"
+            ObjectId promoterId FK "References Promoter._id"
+            ObjectId participantId FK "References Participant._id"
+            Date createdAt "Auto-generated creation timestamp"
+        }
+        
+        LandingPage }o--o{ Promoter : "assigned promoters"
+        LandingPage ||--o{ Campaign : "used by"
+        Campaign ||--o{ Event : "contains events"
+        Promoter ||--o{ PromoterSelection : "receives selections"
+        LandingPage ||--o{ PromoterSelection : "records selections"
+    end
+    
+    %% Table Description: Promoter
+    %% Field staff who distribute NFC cards.
+    %% Nickname helps match promoter mentions in Google reviews.
+    %% Cached counters avoid expensive aggregation queries for leaderboard.
+    
+    %% Table Description: Campaign
+    %% Organizes promoters, cards, and events into campaigns.
+    %% Status transitions: scheduled → active → completed.
+    %% Cached counters for quick dashboard display.
+    
+    %% Table Description: Event
+    %% Specific event instances within a campaign.
+    %% Each event has date, venue, signup count.
+    %% Used for event tracking and promoter assignment.
+    
+    %% Table Description: PromoterSelection
+    %% Tracks which promoter a customer selected on landing page.
+    %% Critical for promoter attribution and leaderboard.
+    %% Links customer interaction to promoter performance.
+
+    %% ═══════════════════════════════════════════════════════════
+    %% CARD MODULE
+    %% ═══════════════════════════════════════════════════════════
+    
+    subgraph Card_Module
+        direction TB
+        Card {
+            ObjectId _id PK "Unique identifier"
+            ObjectId promoterId FK "References Promoter._id"
+            ObjectId landingPageId FK "References LandingPage._id"
+            Enum cardType "nfc | qr_code"
+            String nfcUuid "NFC UUID (unique, sparse index)"
+            String qrCodeUrl "Generated QR code URL"
+            String name "Card name for admin reference"
+            Enum status "active | inactive | lost | replaced"
+            Number totalInteractions "Cached tap count"
+            Date lastTapAt "Last tap timestamp"
+            Object metadata "Additional card data"
+            Date createdAt "Auto-generated creation timestamp"
+            Date updatedAt "Auto-generated update timestamp"
+        }
+        
+        CardInteraction {
+            ObjectId _id PK "Unique identifier"
+            ObjectId cardId FK "References Card._id"
+            ObjectId participantId FK "References Participant._id"
+            String ipAddress "Track tap location"
+            String deviceInfo "Device information"
+            String userAgent "Browser info"
+            Date createdAt "Auto-generated creation timestamp"
+        }
+        
+        Promoter ||--o{ Card : "assigned cards"
+        Card ||--o{ CardInteraction : "records taps"
+    end
+    
+    %% Table Description: Card
+    %% Physical NFC cards or digital QR codes.
+    %% NFC UUID resolves to landing page (critical path).
+    %% Cached counters for quick stats. Status tracks card lifecycle.
+    
+    %% Table Description: CardInteraction
+    %% Tracks every NFC tap or QR scan.
+    %% Used for analytics, fraud detection, and promoter performance.
+    %% High-volume collection - consider time-series optimization.
+
+    %% ═══════════════════════════════════════════════════════════
+    %% PARTICIPANT MODULE
+    %% ═══════════════════════════════════════════════════════════
+    
+    subgraph Participant_Module
+        direction TB
+        Participant {
+            ObjectId _id PK "Unique identifier"
+            ObjectId landingPageId FK "References LandingPage._id"
+            ObjectId campaignId FK "References Campaign._id"
+            ObjectId promoterId FK "References Promoter._id"
+            String name "Participant name"
+            String email "Participant email"
+            String phone "Participant phone"
+            Enum status "confirmed | pending | bounced"
+            String prizeWon "Prize won from game"
+            String source "Traffic source"
+            Boolean consentGiven "GDPR consent flag"
+            Object metadata "Additional participant data"
+            Date createdAt "Auto-generated creation timestamp"
+            Date updatedAt "Auto-generated update timestamp"
+        }
+        
+        LandingPage ||--o{ Participant : "collects"
+        Campaign ||--o{ Participant : "collects participants"
+        PromoterSelection }o--|| Participant : "selects"
+        CardInteraction }o--|| Participant : "generates"
+    end
+    
+    %% Table Description: Participant
+    %% Customer data captured from landing page sign-ups.
+    %% GDPR compliance requires consent flag.
+    %% Linked to landing page, campaign, and promoter for attribution.
+
+    %% ═══════════════════════════════════════════════════════════
+    %% GAME MODULE
+    %% ═══════════════════════════════════════════════════════════
+    
+    subgraph Game_Module
+        direction TB
+        GamePlay {
+            ObjectId _id PK "Unique identifier"
+            ObjectId landingPageId FK "References LandingPage._id"
+            ObjectId participantId FK "References Participant._id"
+            Enum gameType "dice_roll | spin_wheel"
+            String result "Prize won"
+            Boolean redeemed "Redemption status"
+            Date redeemedAt "Redemption timestamp"
+            String ipAddress "Client IP for fraud detection"
+            String deviceFingerprint "Device fingerprint for rate limiting"
+            String sessionId "Session identifier"
+            Date createdAt "Auto-generated creation timestamp"
+        }
+        
+        Prize {
+            ObjectId _id PK "Unique identifier"
+            ObjectId landingPageId FK "References LandingPage._id"
+            String name "Prize name"
+            Number probability "Win probability (0-1)"
+            Number maxRedemptions "Max redemption limit"
+            Number currentRedemptions "Current redemption count"
+            Boolean active "Prize active status"
+            Number displayOrder "Display order"
+            Date createdAt "Auto-generated creation timestamp"
+        }
+        
+        LandingPage ||--o{ GamePlay : "hosts games"
+        LandingPage ||--o{ Prize : "offers prizes"
+        Participant ||--o{ GamePlay : "plays games"
+    end
+    
+    %% Table Description: GamePlay
+    %% Records every game play.
+    %% Device fingerprint prevents abuse (1 play per 5 min).
+    %% Result stores prize won. Redemption tracking for prize fulfillment.
+    
+    %% Table Description: Prize
+    %% Prizes offered on landing page games.
+    %% Probability determines win rate.
+    %% Max redemptions prevents unlimited prizes.
+    %% Display order controls game UI.
+
+    %% ═══════════════════════════════════════════════════════════
+    %% REVIEW MODULE
+    %% ═══════════════════════════════════════════════════════════
+    
+    subgraph Review_Module
+        direction TB
+        ReviewClick {
+            ObjectId _id PK "Unique identifier"
+            ObjectId landingPageId FK "References LandingPage._id"
+            ObjectId participantId FK "References Participant._id"
+            ObjectId promoterId FK "References Promoter._id"
+            String googleReviewUrl "Google review URL"
+            Boolean clicked "Click status"
+            Date createdAt "Auto-generated creation timestamp"
+        }
+        
+        LandingPage ||--o{ ReviewClick : "tracks clicks"
+        Participant ||--o{ ReviewClick : "clicks reviews"
+        Promoter ||--o{ ReviewClick : "attributed reviews"
+    end
+    
+    %% Table Description: ReviewClick
+    %% Tracks when customers click "Leave a Review" button.
+    %% Google API doesn't allow tracking actual reviews, so clicks are proxy metric.
+    %% Attributed to promoter for performance.
+
+    %% ═══════════════════════════════════════════════════════════
+    %% ANALYTICS & REPORT MODULE
+    %% ═══════════════════════════════════════════════════════════
+    
+    subgraph Analytics_Report
+        direction TB
+        AnalyticsDaily {
+            ObjectId _id PK "Unique identifier"
+            Date date "Aggregation date (unique)"
+            Number totalInteractions "Daily interaction count"
+            Number uniqueVisitors "Daily unique visitors"
+            Number returnVisitors "Daily return visitors"
+            Number totalSignups "Daily signup count"
+            Number totalGamePlays "Daily game plays"
+            Number totalReviewClicks "Daily review clicks"
+            Number totalSocialClicks "Daily social clicks"
+            Date createdAt "Auto-generated creation timestamp"
+        }
+        
+        Report {
+            ObjectId _id PK "Unique identifier"
+            Enum reportType "monthly_performance | audience_data | engagement | game_performance"
+            Enum format "pdf | csv | excel | json"
+            Enum status "pending | completed | failed"
+            String fileUrl "Download URL (S3)"
+            Number fileSize "File size in bytes"
+            Object parameters "Report parameters"
+            String errorMessage "Error details if failed"
+            Date completedAt "Completion timestamp"
+            Date createdAt "Auto-generated creation timestamp"
+        }
+    end
+    
+    %% Table Description: AnalyticsDaily
+    %% Pre-aggregated daily metrics for fast dashboard loading.
+    %% Avoids expensive aggregation queries on raw data.
+    %% Updated by scheduled BullMQ job at midnight.
+    
+    %% Table Description: Report
+    %% Tracks async report generation jobs.
+    %% Status tracks lifecycle: pending → completed/failed.
+    %% File stored in S3 after generation.
+    %% BullMQ handles async processing.
