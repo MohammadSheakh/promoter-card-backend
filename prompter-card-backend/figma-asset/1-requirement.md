@@ -10,33 +10,43 @@ The traditional method of using flyers for event promotion has become outdated a
 
 Functional Requirements
 
-1. Admin 
-Dashboard: Overview of all promoters, events, signups, and Google reviews.
-Promoter Management: Ability to add, edit, or remove promoters.
+> 1. Admin 
+
+- Dashboard: Overview of all promoters, events, signups, and Google reviews.
+- Promoter Management: Ability to add, edit, or remove promoters.
 Landing Page Customization: Ability to create and customize landing pages for different events and link them to promoters.
-Metrics & Reporting: View metrics such as:
+- Metrics & Reporting: View metrics such as:
 Number of hits to the landing page.
 Number of signups by each promoter.
 Number of Google reviews collected by each promoter.
-Promoter Activity Tracking: View detailed activity logs for each promoter, such as the number of taps, game interactions, and reviews.
-Event Management: Ability to create new events and assign promoters to those events.
-Prize Management: Set up prizes for game interactions (e.g., dice roll or spin wheel).
-Admin Settings: Configure settings for the site, manage permissions, and handle account-related tasks.
+- Promoter Activity Tracking: View detailed activity logs for each promoter, such as the number of taps, game interactions, and reviews.
+- Event Management: Ability to create new events and assign promoters to those events.
+- Prize Management: Set up prizes for game interactions (e.g., dice roll or spin wheel).
+- Admin Settings: Configure settings for the site, manage permissions, and handle account-related tasks.
 
-1. Promoter
-Personal Dashboard: Overview of personal performance, such as number of signups, reviews collected, and landing page hits.
-Custom Landing Pages: Ability to customize the landing page for each event they are promoting.
-Event Tracking: View real-time stats on how their landing page is performing.
-Game Interaction: Run games (dice roll or spin wheel) for users they interact with (via NFC tap).
-Prize Redemption: View and manage prizes claimed by participants.
-Sign-Up Management: Collect guest list signups directly from their landing page.
-Review Collection: Prompt participants to leave a Google review in exchange for a prize.
-Promoter Profile: Update personal info, event-specific promotions, and past performance.
+> 1. Promoter
+
+- Personal Dashboard: Overview of personal performance, such as number of signups, reviews collected, and landing page hits.
+  
+- Custom Landing Pages: Ability to customize the landing page for each event they are promoting.
+
+- Event Tracking: View real-time stats on how their landing page is performing.
+
+- Game Interaction: Run games (dice roll or spin wheel) for users they interact with (via NFC tap).
+
+- Prize Redemption: View and manage prizes claimed by participants.
+- Sign-Up Management: Collect guest list signups directly from their landing page.
+
+- Review Collection: Prompt participants to leave a Google review in exchange for a prize.
+
+- Promoter Profile: Update personal info, event-specific promotions, and past performance.
 
 
-3. Customer
-Landing Page Access: Access the landing page through NFC tap or direct link, where they can interact with the promoter's event page.
-Game Interaction: Participate in a simple game (e.g., dice roll or spin wheel) to win a prize.
-Sign-Up: Sign up for the guest list for the event being promoted.
-Google Review: Leave a Google review in exchange for a prize.
-Prize Claim: Claim a prize based on game results or sign-up completion.
+> 1. Customer
+   
+- Landing Page Access: Access the landing page through NFC tap or direct link, where they can interact with the promoter's event page.
+- Game Interaction: Participate in a simple game (e.g., dice roll or spin wheel) to win a prize.
+
+- Sign-Up: Sign up for the guest list for the event being promoted.
+- Google Review: Leave a Google review in exchange for a prize.
+- Prize Claim: Claim a prize based on game results or sign-up completion.
